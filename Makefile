@@ -12,8 +12,10 @@ icc: $(NAME).c
 report: $(PROG)
 	perf stat -e cycles,instructions,task-clock ./$(PROG) $(A1) $(A2) > $(PROG).out 2>&1 && cat $(PROG).out
 
+tau: $(NAME).c
+	tau_cc.sh $(NAME).c -o lapFusionTAU
 
 
 .PHONY: clean
 clean:
-	rm -f $(NAME)Gcc* $(NAME)Icc* *.out
+	rm -f $(NAME)Gcc* $(NAME)Icc* *.out profile.* tautrace.* *.o
