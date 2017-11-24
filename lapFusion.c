@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,6 +19,7 @@ float laplace_step(float *in, float *out, int n)
 {
   int i, j;
   float error=0.0f;
+  #pragma omp parallel for private(i,j) shared(in, out, n)
   for ( j=1; j < n-1; j++ )
     #pragma omp simd reduction(max:error)
     for ( i=1; i < n-1; i++ )
@@ -45,6 +47,7 @@ int main(int argc, char** argv)
   int n = 4096;
   int iter_max = 1000;
   float *A, *temp;
+  omp_set_num_threads(1);
     
   const float tol = 1.0e-5f;
   float error= 1.0f;    
