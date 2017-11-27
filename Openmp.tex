@@ -1,0 +1,219 @@
+\documentclass[11pt]{article}
+\usepackage[english]{babel}
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{booktabs} %Tablas quedan mejor
+\usepackage{vmargin} %Márgenes
+\usepackage{hyperref}
+\setpapersize{A4}
+\setmargins{2.5cm}       % margen izquierdo
+{1.5cm}                        % margen superior
+{16.5cm}                      % anchura del texto
+{22.42cm}                    % altura del texto
+{10pt}                           % altura de los encabezados
+{1.5cm}                           % espacio entre el texto y los encabezados
+{0pt}                             % altura del pie de página
+{2cm}                           % espacio entre el texto y el pie de página
+
+\usepackage[none]{hyphenat} %No corta palabras al final de las lineas
+\usepackage{graphicx} %Imágenes
+\usepackage{subfigure} % subfiguras
+\graphicspath{{img/}} % Root for images
+\usepackage{wrapfig}
+\usepackage{siunitx} %Escribir números y unidades
+\usepackage{amsmath} %Mayor facilidad para escribir matrices y otros elementos matemáticos
+%\numberwithin{equation}{section} %En las ecuaciones se especifica también el capítulo
+\usepackage{xcolor} %Colores (\color{})
+\usepackage{lipsum}
+\usepackage{topcapt}
+\usepackage{parskip}
+\usepackage{braket}
+\usepackage{setspace}
+\usepackage{listings}
+\usepackage{fancyhdr} %Cabeceras
+\pagestyle{fancy} % seleccionamos un estilo
+
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  basicstyle=\scriptsize,        % the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=L,	                   % adds a frame around the code
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue},       % keyword style
+  language=C,                 % the language of the code
+  morekeywords={*,...},           % if you want to add more keywords to the set
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=8pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=2,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,	                   % sets default tabsize to 2 spaces
+  title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+
+\lhead{Openmp programming} %CAMBIA
+\rhead{Parallel programming} %CAMBIA
+
+
+
+
+
+\begin{document}
+
+\setstretch{1.3} % Line spacing of 1.5
+\setlength{\parskip}{5mm}
+
+\renewcommand{\tablename}{Table}
+
+\thispagestyle{empty} %Primera página sin número
+\begin{center}
+	
+	{\scshape\LARGE Parallel programming\par}
+	\vspace{0.5cm}
+	\rule{15cm}{0.8pt}\\
+	{\huge\bfseries Openmp programming: Laplace\par}
+	\rule{15cm}{0.8pt}\\
+	\vspace{0.5cm}
+	{\large \textbf{ppM-1-4:} \itshape Michal Kustosz, Jorge Pardillos\par}
+
+\end{center}
+\setcounter{page}{1} %Empezamos a contar los números
+
+
+
+\pagenumbering{arabic} %Ponemos números normales (árabes) ya
+\pagestyle{fancy} % seleccionamos un estilo
+
+
+\section{Introduction}
+
+The aim of this report is to study the effect of parallelisation in \emph{C} using \emph{openmp}.
+
+First of all, the code will be analysed and implementations will be made in order to parallelise it, commenting the initial results of such parallelisation.
+
+After that, using the tool that has been installed during the lab sesions \emph{Tau}, a performance analysis will be carried out, studying more in detail the results of this parallelisation and its metrics.
+
+\section{About the code}
+
+The code to be analysed is a simulation of the Laplace equation. In this program, the main function resides in the function called \emph{laplace\_step()}, where the new elements of the matrix $A$ are computed based on the previous values.
+
+More specifically, the following code is the core of the program:
+\lstset{language=C}
+\begin{lstlisting}		
+for ( j=1; j < n-1; j++ )
+    #pragma omp simd reduction(max:error)
+    for ( i=1; i < n-1; i++ )
+    {
+      out[j*n+i]= stencil(in[j*n+i+1], in[j*n+i-1], in[(j-1)*n+i], in[(j+1)*n+i]);
+      error = max_error( error, out[j*n+i], in[j*n+i] );
+    }
+\end{lstlisting}
+
+In order to parallelise it, one pragma instruction has been introduced before the while loop. The variables $A$, $temp$ (containing the information about the matrices), \emph{error}, \emph{iter} and $n$ have been selected as shared variables. The number of threads is defined here as well. Inside the loop, the \emph{laplace\_step()} is executed in parallel in all the threads, while the rest of the code is executed sequentially.
+
+\lstset{language=C}
+\begin{lstlisting}		
+#pragma omp parallel num_threads(8) shared(A,temp,error,iter,n)
+  while ( error > tol*tol && iter < iter_max )
+  {
+    error= laplace_step (A, temp, n);
+    #pragma omp master
+    {
+    iter++;
+    float *swap= A; A=temp; temp= swap; // swap pointers A & temp
+    }
+  }
+\end{lstlisting}
+
+Inside the function \emph{laplace\_step()} there has been introduced the following code:
+\begin{lstlisting}		
+float laplace_step(float *in, float *out, int n)
+{
+  int i, j;
+  float error=0.0f;
+  #pragma omp for private(i, j) nowait
+  for ( j=1; j < n-1; j++ )
+    #pragma omp simd reduction(max:error)
+    for ( i=1; i < n-1; i++ )
+    {
+      out[j*n+i]= stencil(in[j*n+i+1], in[j*n+i-1], in[(j-1)*n+i], in[(j+1)*n+i]);
+      error = max_error( error, out[j*n+i], in[j*n+i] );
+    }
+  return error;
+}
+\end{lstlisting}
+
+This way the program is properly parallelised, and we can proceed to measure its metrics with the tool \emph{perf}.
+
+In the table below it is described the results obtained for this program. Improvements have been obtained with all the number of threads.
+
+\newpage
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l c c c c c c c c r}
+\toprule
+Threads	&	Cycles	&	Instructions	&  Insns/cycle & task-clock	&	cache-misses & Seconds	\\
+\midrule
+Sequential & 82.358.161.316 & 117.854.234.964  & 1,43 & 24406,62 & 63.086.945 & 24,459\\
+2 & 125.763.778.766 & 118.017.309.730 & 0,94 & 38838,00 & 304.712.719 & 19,472\\
+4 & 224.244.846.876 & 118.029.183.954 & 0,53 & 69178,65 & 672.032.373 & 17,355\\
+8 & 455.615.949.828 & 118.796.320.205 & 0,26 & 140745,87 & 1.158.142.860 & 17,681\\
+\bottomrule							
+\label{table:parallelcode}
+\end{tabular}
+\caption{Metric results using N=10000, iter=100. Compiler: gcc 6.1.0. $3.30$GHz}
+\end{table}
+
+
+However, it is important to remark that this results have been obtained using the optimisation provided by the compiler, i.e. using the \emph{-Ofast} command. This option introduces as many optimisations in de code as possible, leaving very small chance to improvements. If this option had not been used, the sequential program would have performed much worse, and the parallelisations would have been several times faster than the original one. Usually, as many times faster as the number of open threads.
+
+
+\section{Tau analysis}
+
+\subsection{Openmp}
+
+\subsection{Openmp+papi}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
